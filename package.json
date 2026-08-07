@@ -1,0 +1,24 @@
+{
+  "name": "clint-search-script",
+  "version": "1.0.0",
+  "description": "Google Places Lead Finder for businesses without websites",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "google-places",
+    "lead-finder",
+    "leads",
+    "no-website",
+    "monochrome-app"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@googlemaps/google-maps-services-js": "^3.4.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}
