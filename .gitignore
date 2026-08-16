@@ -1,27 +1,5 @@
-# Environment variables
-.env
-.env.local
-
-# Node.js dependencies
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Output data & CSV exports
-*.csv
-leads_no_website.csv
-
-# Python cache & virtual environments
-__pycache__/
-*.py[cod]
-*$py.class
-.venv/
-venv/
-ENV/
-
-# OS / IDE metadata
+dist/
+.env
 .DS_Store
-Thumbs.db
-.vscode/
-.idea/
+*.log

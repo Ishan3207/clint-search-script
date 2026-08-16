@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Finder Pro - AI Google Maps Scraper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/src/styles/variables.css">
+    <link rel="stylesheet" href="/src/styles/base.css">
+    <link rel="stylesheet" href="/src/styles/layout.css">
+    <link rel="stylesheet" href="/src/styles/components.css">
+    <link rel="stylesheet" href="/src/styles/animations.css">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header glass-panel">
+            <div class="header-content">
+                <div class="logo-area">
+                    <h1>LEAD FINDER <span class="accent-text">PRO</span></h1>
+                    <p>AI-Powered Google Maps Scraper</p>
+                </div>
+                <div class="ai-status" id="aiStatusBadge">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Checking AI...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <!-- Search Configuration Card -->
+            <section class="card search-card glass-panel" id="searchFormContainer">
+                <!-- Injected via search-form.js -->
+            </section>
+
+            <!-- Progress & Status -->
+            <section class="card status-card glass-panel hidden" id="progressContainer">
+                <!-- Injected via progress-bar.js -->
+            </section>
+
+            <!-- Console Log -->
+            <section class="card console-card glass-panel">
+                <div class="card-header">
+                    <h2>Live Console</h2>
+                    <button class="btn btn-icon btn-sm" id="clearConsoleBtn">Clear</button>
+                </div>
+                <div class="console-body" id="consoleLogContainer">
+                    <!-- Injected via console-log.js -->
+                </div>
+            </section>
+
+            <!-- Results Data -->
+            <section class="card results-card glass-panel">
+                <div class="card-header">
+                    <h2>Qualified Leads <span class="badge" id="leadCountBadge">0</span></h2>
+                    <div id="exportControlsContainer">
+                        <!-- Injected via export-controls.js -->
+                    </div>
+                </div>
+                <div class="table-container" id="resultsTableContainer">
+                    <!-- Injected via results-table.js -->
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>

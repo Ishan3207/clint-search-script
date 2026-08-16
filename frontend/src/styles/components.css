@@ -1,0 +1,257 @@
+/* components.css */
+
+/* Solid Panels */
+.glass-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: none;
+}
+
+.card {
+    padding: 1.5rem;
+}
+
+/* Form Inputs */
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.input-group label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.checkbox-group label {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: auto;
+    cursor: pointer;
+    accent-color: var(--bg-main); /* Makes the checkbox monochrome in supported browsers */
+}
+
+input, select, textarea {
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    font-family: var(--font-family);
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    outline: none;
+    width: 100%;
+}
+
+input:focus, select:focus {
+    background: var(--bg-input-focus);
+    border-color: var(--accent-primary);
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--border-subtle);
+    font-family: var(--font-family);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: var(--accent-primary);
+    color: #000;
+    border: 1px solid var(--accent-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--accent-secondary);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--bg-input);
+}
+
+.btn-sm {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+/* Badges & Status */
+.badge {
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+}
+
+.badge.primary {
+    background: var(--bg-input);
+    color: var(--text-primary);
+}
+
+.badge.success {
+    background: var(--bg-input);
+    color: var(--text-primary);
+}
+
+.ai-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    background: var(--bg-input);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-subtle);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 0; /* Square dot for sharp look */
+    background: var(--text-muted);
+}
+.status-dot.healthy { background: var(--text-primary); box-shadow: none; }
+.status-dot.error { background: var(--text-muted); box-shadow: none; }
+
+/* Table */
+.table-container {
+    overflow-x: auto;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: transparent;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+th, td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg-input);
+    position: sticky;
+    top: 0;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tr:hover td {
+    background: var(--bg-input);
+}
+
+/* Console */
+.console-body {
+    background: #000;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    height: 200px;
+    overflow-y: auto;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.8rem;
+    border: 1px solid var(--border-subtle);
+}
+
+.log-line {
+    margin-bottom: 0.25rem;
+    line-height: 1.4;
+}
+
+.log-info { color: var(--text-secondary); }
+.log-success { color: var(--text-primary); }
+.log-warn { color: var(--text-muted); }
+.log-error { color: var(--text-muted); }
+.log-time { color: var(--text-muted); margin-right: 0.5rem; }
+
+/* Progress Bar */
+.progress-wrapper {
+    background: var(--bg-input);
+    border-radius: var(--radius-full);
+    height: 8px;
+    overflow: hidden;
+    margin: 1rem 0;
+    border: 1px solid var(--border-subtle);
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--text-primary);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-fill.indeterminate {
+    width: 30%;
+    animation: indeterminate 1.5s infinite linear;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Dialog styling */
+dialog {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+    padding: 2rem;
+    margin: auto;
+    width: 400px;
+    max-width: 90%;
+}
+dialog::backdrop {
+    background: rgba(0, 0, 0, 0.8);
+}
+dialog .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}

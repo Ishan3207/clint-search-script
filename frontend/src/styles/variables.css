@@ -1,0 +1,46 @@
+/* variables.css */
+:root {
+    /* Colors - Monochrome */
+    --bg-main: #111111;
+    --bg-card: #000000;
+    --bg-input: #1a1a1a;
+    --bg-input-focus: #2a2a2a;
+    
+    /* Accents - Monochrome */
+    --accent-primary: #ffffff;
+    --accent-secondary: #e0e0e0;
+    --accent-tertiary: #cccccc;
+    
+    /* Status Colors - Muted */
+    --status-success: #888888;
+    --status-warning: #666666;
+    --status-error: #444444;
+    --status-info: #aaaaaa;
+    
+    /* Text Colors */
+    --text-primary: #ffffff;
+    --text-secondary: #bbbbbb;
+    --text-muted: #888888;
+    
+    /* Borders */
+    --border-subtle: #333333;
+    --border-glow: transparent;
+    
+    /* Gradients (Removed for monochrome/sharp look) */
+    --gradient-accent: #ffffff;
+    --gradient-glow: transparent;
+    
+    /* Shadows (Removed) */
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-glow: none;
+    
+    /* Typography */
+    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    
+    /* Spacing & Borders - Sharp Edges */
+    --radius-sm: 0px;
+    --radius-md: 0px;
+    --radius-lg: 0px;
+    --radius-full: 0px;
+}
