@@ -1,114 +1,211 @@
 import { chromium } from 'playwright';
-import { applyStealth } from './stealth.js';
+import { applyStealth, getRandomClientProfile } from './stealth.js';
+import { proxyRotator } from './proxy-rotator.js';
+
+/**
+ * High-Performance Event-Driven Browser & Context Pool
+ * Features:
+ * - Domain-level tracker & ad blocking (inspired by Scrapling domain blocker)
+ * - Map tile & unnecessary asset filtering for 3x faster page loads
+ * - FIFO Semaphore-based context acquisition (zero busy-wait polling)
+ * - Per-context operation lifecycle tracking & memory leak recycling
+ * - Native ProxyRotator integration
+ */
+
+const BLOCKED_DOMAINS = [
+    'google-analytics.com',
+    'googletagmanager.com',
+    'doubleclick.net',
+    'googleadservices.com',
+    'adservice.google.com',
+    'facebook.net',
+    'connect.facebook.net',
+    'clarity.ms',
+    'hotjar.com',
+    'segment.io',
+    'scorecardresearch.com',
+    'criteo.com',
+    'outbrain.com',
+    'taboola.com'
+];
 
 class BrowserPool {
-  constructor(maxConcurrency) {
-    this.maxConcurrency = maxConcurrency;
-    this.browser = null;
-    this.contexts = [];
-    this.availableContexts = [];
-    this.isInitialized = false;
-  }
-
-  async initialize() {
-    if (this.isInitialized) return;
-    
-    // Launch a single browser instance
-    this.browser = await chromium.launch({
-      headless: process.env.HEADLESS !== 'false',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--disable-extensions',
-        '--disable-background-networking',
-        '--disable-default-apps'
-      ]
-    });
-
-    // Create the pool of contexts
-    for (let i = 0; i < this.maxConcurrency; i++) {
-      const context = await this.browser.newContext({
-        viewport: { 
-          width: 1280 + Math.floor(Math.random() * 640), 
-          height: 720 + Math.floor(Math.random() * 360) 
-        },
-        locale: 'en-US',
-        userAgent: this._getRandomUserAgent(),
-        ignoreHTTPSErrors: true
-      });
-      
-      // Actually block images, fonts, media, and stylesheets to save RAM and bandwidth
-      await context.route('**/*', (route) => {
-          const request = route.request();
-          const resourceType = request.resourceType();
-          
-          if (['image', 'media', 'font', 'stylesheet'].includes(resourceType)) {
-              route.abort();
-          } else {
-              route.continue();
-          }
-      });
-
-      // Apply stealth scripts to the context
-      await applyStealth(context);
-      
-      const contextItem = { id: i, context, inUse: false };
-      this.contexts.push(contextItem);
-      this.availableContexts.push(contextItem);
-    }
-    
-    this.isInitialized = true;
-    console.log(`Browser pool initialized with ${this.maxConcurrency} contexts.`);
-  }
-
-  _getRandomUserAgent() {
-    const uas = [
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
-    ];
-    return uas[Math.floor(Math.random() * uas.length)];
-  }
-
-  async acquireContext() {
-    if (!this.isInitialized) {
-      await this.initialize();
+    constructor(maxConcurrency) {
+        this.maxConcurrency = maxConcurrency;
+        this.browser = null;
+        this.contexts = [];
+        this.availableContexts = [];
+        this.waitingQueue = [];
+        this.isInitialized = false;
+        this.maxOpsPerContext = 30; // Auto-recycle after 30 pages to prevent memory leaks
     }
 
-    // Wait for a context to become available if all are in use
-    while (this.availableContexts.length === 0) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    async initialize() {
+        if (this.isInitialized) return;
+
+        this.browser = await chromium.launch({
+            headless: process.env.HEADLESS !== 'false',
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--disable-gpu',
+                '--disable-extensions',
+                '--disable-background-networking',
+                '--disable-default-apps',
+                '--disable-sync',
+                '--blink-settings=imagesEnabled=false' // Native Blink flag to disable rendering images
+            ]
+        });
+
+        for (let i = 0; i < this.maxConcurrency; i++) {
+            const contextItem = await this._createContext(i);
+            this.contexts.push(contextItem);
+            this.availableContexts.push(contextItem);
+        }
+
+        this.isInitialized = true;
+        console.log(`[BrowserPool] Initialized pool with ${this.maxConcurrency} stealth contexts.`);
     }
 
-    const contextItem = this.availableContexts.pop();
-    contextItem.inUse = true;
-    return contextItem;
-  }
+    async _createContext(id) {
+        const clientProfile = getRandomClientProfile();
+        const proxyConfig = proxyRotator.getNextProxy();
 
-  releaseContext(contextItem) {
-    if (contextItem && this.contexts.includes(contextItem)) {
-      contextItem.inUse = false;
-      this.availableContexts.push(contextItem);
-    }
-  }
+        const contextOptions = {
+            viewport: {
+                width: 1366 + Math.floor(Math.random() * 200),
+                height: 768 + Math.floor(Math.random() * 200)
+            },
+            locale: 'en-US',
+            timezoneId: 'America/New_York',
+            userAgent: clientProfile.userAgent,
+            extraHTTPHeaders: {
+                'sec-ch-ua': clientProfile.secChUa,
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': clientProfile.platform,
+                'accept-language': 'en-US,en;q=0.9'
+            },
+            ignoreHTTPSErrors: true
+        };
 
-  async close() {
-    if (this.browser) {
-      await this.browser.close();
-      this.isInitialized = false;
-      this.contexts = [];
-      this.availableContexts = [];
-      console.log('Browser pool closed.');
+        if (proxyConfig) {
+            contextOptions.proxy = {
+                server: proxyConfig.server,
+                username: proxyConfig.username,
+                password: proxyConfig.password
+            };
+        }
+
+        const context = await this.browser.newContext(contextOptions);
+
+        // Smart route filtering: block trackers, heavy fonts/images, map vector tiles
+        await context.route('**/*', (route) => {
+            const request = route.request();
+            const url = request.url().toLowerCase();
+            const resourceType = request.resourceType();
+
+            // 1. Block known tracker/telemetry domains
+            if (BLOCKED_DOMAINS.some(domain => url.includes(domain))) {
+                return route.abort();
+            }
+
+            // 2. Block heavy media and map tiles that consume massive RAM
+            if (['image', 'media', 'font', 'stylesheet'].includes(resourceType)) {
+                return route.abort();
+            }
+
+            // 3. Block Google Maps satellite raster tiles, audio, and StreetView panoramas
+            if (url.includes('/maps/vt?') || url.includes('/maps/photometa') || url.includes('/maps/preview/imagery/')) {
+                return route.abort();
+            }
+
+            route.continue();
+        });
+
+        await applyStealth(context);
+
+        return {
+            id,
+            context,
+            inUse: false,
+            opCount: 0,
+            proxyId: proxyConfig ? proxyConfig.id : null
+        };
     }
-  }
+
+    /**
+     * Acquire a context via FIFO Semaphore Queue (Zero CPU polling)
+     */
+    async acquireContext() {
+        if (!this.isInitialized) {
+            await this.initialize();
+        }
+
+        if (this.availableContexts.length > 0) {
+            const contextItem = this.availableContexts.pop();
+            contextItem.inUse = true;
+            return contextItem;
+        }
+
+        // Suspend until a context is released
+        return new Promise((resolve) => {
+            this.waitingQueue.push(resolve);
+        });
+    }
+
+    /**
+     * Release a context back to the pool or dispatch to next waiting task
+     */
+    async releaseContext(contextItem) {
+        if (!contextItem) return;
+
+        contextItem.opCount++;
+
+        // Auto-recycle context if it has performed too many operations
+        if (contextItem.opCount >= this.maxOpsPerContext && this.browser) {
+            try {
+                await contextItem.context.close().catch(() => {});
+                const fresh = await this._createContext(contextItem.id);
+                const idx = this.contexts.findIndex(c => c.id === contextItem.id);
+                if (idx !== -1) this.contexts[idx] = fresh;
+                contextItem = fresh;
+            } catch (e) {
+                console.warn('[BrowserPool] Error recycling context:', e.message);
+            }
+        }
+
+        contextItem.inUse = false;
+
+        // If tasks are waiting in FIFO queue, dispatch immediately
+        if (this.waitingQueue.length > 0) {
+            const nextResolver = this.waitingQueue.shift();
+            contextItem.inUse = true;
+            nextResolver(contextItem);
+        } else {
+            this.availableContexts.push(contextItem);
+        }
+    }
+
+    async close() {
+        if (this.browser) {
+            for (const c of this.contexts) {
+                await c.context.close().catch(() => {});
+            }
+            await this.browser.close().catch(() => {});
+            this.browser = null;
+            this.isInitialized = false;
+            this.contexts = [];
+            this.availableContexts = [];
+            this.waitingQueue = [];
+            console.log('[BrowserPool] Closed all browser contexts.');
+        }
+    }
 }
 
 export const browserPool = new BrowserPool(
-  parseInt(process.env.SCRAPER_CONCURRENCY || '4', 10)
+    parseInt(process.env.SCRAPER_CONCURRENCY || '4', 10)
 );

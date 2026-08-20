@@ -13,7 +13,6 @@ let currentJobId = null;
 let activeProvider = 'gemini';
 let activeModel = '';
 let sessionAiCalls = 0;
-let lastQuotaMetrics = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Instantly display skeleton placeholders
@@ -44,9 +43,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (toggleConsoleBtn) toggleConsoleBtn.addEventListener('click', toggleConsoleDrawer);
         if (minimizeConsoleBtn) minimizeConsoleBtn.addEventListener('click', closeConsoleDrawer);
 
-        // Load active provider & model info & initialize quota meter
+        // Load active provider & model info
         await loadActiveProviderState();
-        updateCircularQuotaMeter();
     }, 150);
 });
 
@@ -87,55 +85,7 @@ function updateHeaderAiBadge(healthy, text) {
     });
 }
 
-/**
- * Updates the circular SVG quota progress meter on the chat bar using exact API token usage & rate limits
- */
-export function updateCircularQuotaMeter(quotaData = null) {
-    if (quotaData) lastQuotaMetrics = quotaData;
 
-    const fillPath = document.getElementById('quotaMeterFill');
-    const centerText = document.getElementById('quotaMeterCenter');
-    const tooltipModel = document.getElementById('quotaTooltipModel');
-    const tooltipDetail = document.getElementById('quotaTooltipDetail');
-
-    if (!fillPath || !centerText) return;
-
-    let percentage = 0;
-    let detailHtml = `Session requests: ${sessionAiCalls}`;
-
-    if (lastQuotaMetrics) {
-        const tokens = lastQuotaMetrics.totalTokensConsumed || 0;
-        const reqs = lastQuotaMetrics.requestsCount || sessionAiCalls;
-        
-        if (lastQuotaMetrics.remaining !== null && lastQuotaMetrics.total) {
-            const remaining = parseInt(lastQuotaMetrics.remaining, 10);
-            const total = parseInt(lastQuotaMetrics.total, 10);
-            const used = Math.max(0, total - remaining);
-            percentage = Math.min(100, Math.round((used / total) * 100));
-            detailHtml = `<div>Quota: ${remaining} / ${total} remaining (${percentage}% used)</div><div style="font-size:0.7rem; color:#94a3b8; margin-top:2px;">Exact Tokens Used: ${tokens.toLocaleString()} | Calls: ${reqs}</div>`;
-        } else {
-            // Free Tier (e.g. Gemini 15 RPM / 1M TPM context limit)
-            percentage = Math.min(100, Math.round((tokens / 100000) * 100) || Math.min(100, reqs * 10));
-            detailHtml = `<div>Tokens Consumed: ${tokens.toLocaleString()}</div><div style="font-size:0.7rem; color:#94a3b8; margin-top:2px;">Total API Calls: ${reqs} | Provider: ${activeProvider.toUpperCase()}</div>`;
-        }
-    } else {
-        percentage = Math.min(100, sessionAiCalls * 10);
-    }
-
-    fillPath.setAttribute('stroke-dasharray', `${percentage}, 100`);
-    centerText.innerText = `${percentage}%`;
-
-    // Color gradient classes
-    fillPath.classList.remove('warn', 'danger');
-    if (percentage >= 75) {
-        fillPath.classList.add('danger');
-    } else if (percentage >= 40) {
-        fillPath.classList.add('warn');
-    }
-
-    if (tooltipModel) tooltipModel.innerText = `${activeProvider.toUpperCase()} Actual Usage`;
-    if (tooltipDetail) tooltipDetail.innerHTML = detailHtml;
-}
 
 /**
  * Search submit handler
@@ -148,7 +98,6 @@ async function handleSearchSubmit(e) {
     }
 
     sessionAiCalls += 1;
-    updateCircularQuotaMeter();
 
     const submitBtn = document.getElementById('startSearchBtn');
     const stopBtn = document.getElementById('stopSearchBtn');
@@ -247,8 +196,9 @@ function connectStream(jobId) {
     });
 
     currentEventSource.addEventListener('quota', (e) => {
+        // Quota telemetry received (logged for debugging)
         const data = JSON.parse(e.data);
-        updateCircularQuotaMeter(data);
+        console.log('[Quota]', data);
     });
 
     currentEventSource.addEventListener('stats', (e) => {

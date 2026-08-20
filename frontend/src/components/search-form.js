@@ -1,7 +1,6 @@
 /**
  * Central Conversational AI Chat & Lead Search Form Component
  * Gemini & Apollo.io inspired horizontal left-pane conversational filter and search tool.
- * Features a circular AI model quota meter on the chat bar that progressively fills as models are used.
  */
 
 export function renderSearchForm(container) {
@@ -17,19 +16,6 @@ export function renderSearchForm(container) {
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <!-- Circular Model Quota & Usage Viewer -->
-                    <div class="quota-meter-wrapper" id="quotaMeterWrapper" title="AI Model Usage & Quota Meter">
-                        <svg class="quota-meter-svg" viewBox="0 0 36 36">
-                            <path class="quota-meter-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <path class="quota-meter-fill" id="quotaMeterFill" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        </svg>
-                        <span class="quota-meter-center" id="quotaMeterCenter">0%</span>
-                        <div class="quota-popover-tooltip" id="quotaPopoverTooltip">
-                            <strong id="quotaTooltipModel">AI Model</strong>
-                            <div id="quotaTooltipDetail">Session usage: 0 requests</div>
-                        </div>
-                    </div>
-
                     <!-- Active AI Model Tag linking to API Setup -->
                     <a href="/settings.html" class="active-model-chip" id="chatActiveModelChip" title="Configure in API Setup">
                         <span class="chip-dot"></span>
