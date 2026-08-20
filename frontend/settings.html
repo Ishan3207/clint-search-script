@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0d1117">
+    <title>AI Provider & API Setup | LeadFinder AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/src/styles/variables.css">
+    <link rel="stylesheet" href="/src/styles/base.css">
+    <link rel="stylesheet" href="/src/styles/layout.css">
+    <link rel="stylesheet" href="/src/styles/components.css">
+    <link rel="stylesheet" href="/src/styles/skeleton.css">
+    <link rel="stylesheet" href="/src/styles/animations.css">
+    <style>
+        .settings-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem 4rem;
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 860px) {
+            .settings-grid {
+                grid-template-columns: 320px 1fr;
+            }
+        }
+
+        .provider-nav-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .provider-nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            width: 100%;
+        }
+
+        .provider-nav-item:hover {
+            border-color: var(--text-secondary);
+            transform: translateY(-1px);
+        }
+
+        .provider-nav-item.active {
+            background: rgba(99, 102, 241, 0.12);
+            border-color: var(--accent-primary, #6366f1);
+        }
+
+        .provider-info-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .provider-info-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        .config-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+        }
+
+        .config-section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .config-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .code-block {
+            background: #000;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            color: #10b981;
+            margin: 1rem 0;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .env-badge {
+            font-size: 0.7rem;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .quota-stat-box {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .quota-stat-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem;
+        }
+
+        .quota-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .quota-stat-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 0.5rem 0.8rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-card);
+            transition: all 0.2s ease;
+        }
+
+        .btn-back:hover {
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <div class="settings-container">
+        <!-- Header -->
+        <header class="settings-header">
+            <div>
+                <a href="/" class="btn-back">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Back to Search
+                </a>
+                <h1 style="font-size: 1.75rem; font-weight: 800; margin-top: 1rem; letter-spacing: -0.02em;">⚙️ AI Provider & API Setup</h1>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Configure your cloud AI keys or local Ollama engine for natural language parsing and scoring.</p>
+            </div>
+            <div id="activeProviderBadge" class="ai-status">
+                <span class="status-dot"></span>
+                <span class="status-text">Checking active AI...</span>
+            </div>
+        </header>
+
+        <!-- Main Settings Layout -->
+        <div class="settings-grid">
+            <!-- Sidebar: Providers Navigation -->
+            <div class="provider-nav-list" id="providerNavList">
+                <button class="provider-nav-item active" data-provider="gemini">
+                    <div>
+                        <div class="provider-info-title">✨ Google Gemini</div>
+                        <div class="provider-info-subtitle">Gemini 2.0 Flash / Pro (Free Tier)</div>
+                    </div>
+                    <span class="env-badge hidden" id="geminiEnvBadge">Configured</span>
+                </button>
+
+                <button class="provider-nav-item" data-provider="openai">
+                    <div>
+                        <div class="provider-info-title">⚡ OpenAI (ChatGPT)</div>
+                        <div class="provider-info-subtitle">GPT-4o Mini, GPT-4o</div>
+                    </div>
+                    <span class="env-badge hidden" id="openaiEnvBadge">Configured</span>
+                </button>
+
+                <button class="provider-nav-item" data-provider="claude">
+                    <div>
+                        <div class="provider-info-title">🧠 Anthropic Claude</div>
+                        <div class="provider-info-subtitle">Claude 3.5 Sonnet & Haiku</div>
+                    </div>
+                    <span class="env-badge hidden" id="claudeEnvBadge">Configured</span>
+                </button>
+
+                <button class="provider-nav-item" data-provider="ollama">
+                    <div>
+                        <div class="provider-info-title">🖥️ Ollama (Local AI)</div>
+                        <div class="provider-info-subtitle">Local offline LLM (Desktop only)</div>
+                    </div>
+                    <span class="env-badge" id="ollamaEnvBadge">Ready</span>
+                </button>
+            </div>
+
+            <!-- Main Config Panel -->
+            <div class="config-card glass-panel" id="providerConfigPanel">
+                <!-- Injected via settings.js -->
+            </div>
+        </div>
+
+        <!-- Security & Architecture Information Card -->
+        <div class="card glass-panel" style="margin-top: 2rem; border-color: rgba(99, 102, 241, 0.3);">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <span style="font-size: 1.25rem;">🔒</span>
+                <h3 style="font-size: 1.05rem; font-weight: 700;">GitHub & Client-Side Security Assurance</h3>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
+                Your API keys are stored <strong>strictly on your local machine inside <code>.env</code></strong>. The frontend never receives, stores, or handles your raw keys. The <code>.env</code> file is permanently listed in <code>.gitignore</code>, ensuring it will never be accidentally committed to GitHub.
+            </p>
+        </div>
+    </div>
+
+    <script type="module" src="/src/settings.js"></script>
+</body>
+</html>
