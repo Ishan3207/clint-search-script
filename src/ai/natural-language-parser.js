@@ -1,27 +1,19 @@
-import { ollama } from './ollama-client.js';
+import { aiProvider } from './ai-provider.js';
+import { sanitizeUserInput } from './prompt-sanitizer.js';
 
-export async function parseNaturalLanguageQuery(query) {
+export async function parseNaturalLanguageQuery(query, providerConfig = {}) {
     if (!query || query.trim() === '') {
         return null;
     }
 
-    const isHealthy = await ollama.isHealthy();
-    if (!isHealthy) {
-        console.warn('Ollama unavailable. Falling back to treating the whole string as a niche.');
-        return {
-            niche: query,
-            location: '',
-            radius: '10km',
-            maxLeads: 'All',
-            filters: ''
-        };
+    const { sanitized: cleanQuery, wasModified } = sanitizeUserInput(query, 1000);
+    if (wasModified) {
+        console.warn(`[NLP Parser] Query sanitized for security/injection prevention.`);
     }
 
-    console.log(`Parsing natural language query: "${query}"...`);
+    console.log(`Parsing natural language query: "${cleanQuery}" via ${providerConfig.provider || 'default AI'}...`);
 
-    const prompt = `
-You are a natural language search parser. I will give you a user's search query, and you need to extract the parameters into a JSON object.
-
+    const systemPrompt = `You are a natural language search parser. Given a user's search query, extract the parameters into a JSON object.
 The required keys in the JSON object are:
 - "niche": The type of business or service (e.g., "cafes", "plumber", "marketing agencies"). Default to empty string if not found.
 - "location": The city, area, or region mentioned (e.g., "Koramangala Bangalore", "Austin"). Default to empty string if not found.
@@ -38,39 +30,52 @@ Example output: {
   "filters": "cheap, no websites"
 }
 
-Example input: "dentists in New York"
-Example output: {
-  "niche": "dentists",
-  "location": "New York",
-  "radius": "10km",
-  "maxLeads": "All",
-  "filters": ""
-}
+Return ONLY the valid JSON object.`;
 
-Return ONLY the JSON object.
-Input: "${query}"
-Output:`;
+    const userPrompt = `Input: "${cleanQuery}"\nOutput:`;
 
     try {
-        const parsed = await ollama.generateJSON(prompt);
-        console.log(`Parsed query: ${JSON.stringify(parsed)}`);
-        
-        // Ensure defaults if AI hallucinates missing keys
+        const response = await aiProvider.generateJSON(userPrompt, providerConfig, systemPrompt);
+        const parsed = response.data;
+        console.log(`Parsed query result: ${JSON.stringify(parsed)}`);
+
         return {
-            niche: parsed.niche || query,
+            niche: parsed.niche || cleanQuery,
             location: parsed.location || '',
             radius: parsed.radius || '10km',
             maxLeads: parsed.maxLeads || 'All',
-            filters: parsed.filters || ''
+            filters: parsed.filters || '',
+            quota: response.quota
         };
-    } catch (error) {
-        console.error('Natural language parsing failed, using fallback.', error);
+    } catch (primaryError) {
+        console.warn(`Primary AI provider failed (${primaryError.message}). Attempting Ollama fallback...`);
+
+        // Fallback to Ollama if primary was not ollama
+        if (providerConfig.provider && providerConfig.provider !== 'ollama') {
+            try {
+                const fallbackResponse = await aiProvider.generateJSON(userPrompt, { provider: 'ollama' }, systemPrompt);
+                const parsed = fallbackResponse.data;
+                return {
+                    niche: parsed.niche || cleanQuery,
+                    location: parsed.location || '',
+                    radius: parsed.radius || '10km',
+                    maxLeads: parsed.maxLeads || 'All',
+                    filters: parsed.filters || '',
+                    quota: fallbackResponse.quota
+                };
+            } catch (fallbackError) {
+                console.warn(`Ollama fallback also failed (${fallbackError.message}). Using raw string fallback.`);
+            }
+        }
+
+        // Final graceful fallback: raw query
         return {
-            niche: query,
+            niche: cleanQuery,
             location: '',
             radius: '10km',
             maxLeads: 'All',
-            filters: ''
+            filters: '',
+            quota: null
         };
     }
 }

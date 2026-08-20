@@ -1,18 +1,15 @@
 import { randomDelay } from './stealth.js';
 
-export async function scrapePlaceDetails(page, url) {
-    console.log(`Navigating to detail page: ${url}`);
+export async function scrapePlaceDetails(page, url, log) {
+    if (log) log(`Navigating to detail page: ${url}`);
     
-    // Wait between 4-8 seconds before visiting a detail page to simulate human
     await randomDelay();
     
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
-    
-    // Wait for the main title element to be visible
     try {
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
         await page.waitForSelector('h1', { timeout: 10000 });
     } catch (e) {
-        console.log(`Timeout waiting for detail page load: ${url}`);
+        if (log) log(`Timeout waiting for detail page load: ${url}`, 'warn');
         return null;
     }
 
@@ -22,86 +19,99 @@ export async function scrapePlaceDetails(page, url) {
             return el ? el.innerText.trim() : null;
         };
 
-        const getButtonAria = (labelContains) => {
-            const buttons = Array.from(document.querySelectorAll('button'));
-            const btn = buttons.find(b => {
-                const aria = b.getAttribute('aria-label');
-                return aria && aria.toLowerCase().includes(labelContains.toLowerCase());
-            });
-            return btn ? btn.getAttribute('aria-label') : null;
-        };
-        
-        const getLinkTextByProtocol = (protocol) => {
-            const links = Array.from(document.querySelectorAll('a'));
-            const link = links.find(a => a.href.startsWith(protocol));
-            if (link) {
-                return protocol === 'mailto:' ? link.href.replace('mailto:', '') : link.href;
-            }
-            return null;
-        };
-
-        // Extracting Data
         const name = getElementText('h1');
         
-        // Categories can sometimes be found near the rating
-        let category = null;
-        const categoryBtn = document.querySelector('button[jsaction="pane.rating.category"]');
-        if (categoryBtn) {
-            category = categoryBtn.innerText;
-        }
-
-        // Phone number
+        // Phone
         let phone = null;
-        const phoneAria = getButtonAria('phone');
-        if (phoneAria) {
-            // usually looks like "Phone: +1 123 456 7890"
-            phone = phoneAria.replace(/phone:/i, '').trim();
+        const phoneLink = document.querySelector('a[href^="tel:"]');
+        if (phoneLink) {
+            phone = phoneLink.href.replace('tel:', '');
+        } else {
+            const phoneBtn = document.querySelector('button[data-tooltip*="phone" i]') || document.querySelector('button[aria-label*="phone" i]');
+            if (phoneBtn) phone = phoneBtn.getAttribute('aria-label')?.replace(/phone:/i, '')?.trim();
         }
 
         // Address
         let address = null;
-        const addressAria = getButtonAria('address');
-        if (addressAria) {
-             address = addressAria.replace(/address:/i, '').trim();
+        const addrBtn = document.querySelector('button[data-item-id="address"]') || document.querySelector('button[aria-label*="Address" i]');
+        if (addrBtn) {
+            address = addrBtn.getAttribute('aria-label')?.replace(/address:/i, '')?.trim();
         }
 
         // Website
         let website = null;
-        const websiteAria = getButtonAria('website');
-        if (websiteAria) {
-            const aTag = document.querySelector('a[aria-label="' + websiteAria + '"]');
-            if (aTag) {
-                website = aTag.href;
-            }
+        const webLink = document.querySelector('a[data-item-id="authority"]') || document.querySelector('a[aria-label*="Website" i]');
+        if (webLink) {
+            website = webLink.href;
         }
-        
-        // Rating and reviews
-        let rating = null;
-        let reviews = null;
-        const ratingDiv = document.querySelector('div[font-display="block"]');
-        if (ratingDiv && ratingDiv.innerText) {
-             rating = ratingDiv.innerText.trim();
-        }
-        
-        const reviewBtn = document.querySelector('button[aria-label*="reviews"]');
-        if (reviewBtn) {
-            const text = reviewBtn.innerText;
-            if (text && text.includes('(')) {
-                reviews = text.replace('(', '').replace(')', '').trim();
+
+        // Direct Email from Google Maps pane
+        let email = null;
+        const mailtoLink = document.querySelector('a[href^="mailto:"]');
+        if (mailtoLink) {
+            email = mailtoLink.href.replace('mailto:', '').split('?')[0].trim();
+        } else {
+            const emailBtn = document.querySelector('button[data-tooltip*="email" i]') || document.querySelector('button[aria-label*="email" i]') || document.querySelector('button[data-item-id*="email" i]');
+            if (emailBtn) {
+                const label = emailBtn.getAttribute('aria-label') || emailBtn.getAttribute('data-tooltip') || '';
+                const match = label.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/i);
+                if (match) email = match[1];
             }
         }
 
-        return {
-            name: name,
-            category: category,
-            phone: phone,
-            address: address,
-            website: website,
-            rating: rating,
-            reviews: reviews,
-            mapsLink: window.location.href
-        };
+        // Fallback email regex scan on details pane text
+        if (!email) {
+            const sidebar = document.querySelector('div[role="main"]') || document.body;
+            const text = sidebar.innerText;
+            const matches = text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi);
+            if (matches && matches.length > 0) {
+                const valid = matches.filter(m => !/\.(png|jpg|jpeg|gif|svg|webp)$/i.test(m) && !m.includes('google.com'));
+                if (valid.length > 0) email = valid[0];
+            }
+        }
+
+        // Rating
+        let rating = null;
+        const ratingSpan = document.querySelector('span[aria-hidden="true"]');
+        if (ratingSpan && /^\d\.\d$/.test(ratingSpan.innerText.trim())) {
+            rating = ratingSpan.innerText.trim();
+        } else {
+            const match = document.body.innerText.match(/(\d\.\d)\s*stars/);
+            if (match) rating = match[1];
+        }
+
+        // Reviews
+        let reviews = null;
+        const reviewBtn = document.querySelector('button[aria-label*="reviews" i]');
+        if (reviewBtn) {
+            const match = reviewBtn.getAttribute('aria-label')?.match(/([\d,]+)\s*reviews/i);
+            if (match) reviews = match[1];
+        }
+
+        // Category
+        let category = null;
+        const catBtn = document.querySelector('button[jsaction*="category"]');
+        if (catBtn) {
+            category = catBtn.innerText.trim();
+        } else {
+            const h1Parent = document.querySelector('h1')?.parentElement;
+            if (h1Parent) {
+                const textNodes = Array.from(h1Parent.childNodes).filter(n => n.nodeType === 3);
+                if (textNodes.length > 0) category = textNodes[0].textContent.trim();
+            }
+        }
+
+        return { name, category, phone, address, website, email, rating, reviews, mapsLink: window.location.href };
     });
+
+    if (!details || !details.name) {
+        if (log) log(`Skipping invalid lead: no name extracted for ${url}`, 'warn');
+        return null;
+    }
+
+    if (log) {
+        log(`Extracted: ${details.name} (Phone: ${details.phone ? '✓' : '✕'}, Email: ${details.email ? '✓' : '✕'}, Web: ${details.website ? '✓' : '✕'})`);
+    }
 
     return details;
 }

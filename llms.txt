@@ -1,0 +1,45 @@
+# AI Maps Scraper
+
+> High-performance Google Maps lead scraper with Playwright browser automation and AI-powered intelligence.
+
+## Overview
+
+AI Maps Scraper is a self-hosted full-stack developer tool designed to scrape Google Maps for business leads, extract verified emails, websites, phone numbers, and social links, and use LLM intelligence for search query parsing, keyword expansion, and criteria-based lead filtering.
+
+## Capabilities
+
+- **Stealth Browser Scraping**: Playwright browser pool with stealth evasions and concurrency management.
+- **Deep Contact Extraction**: Visits discovered websites to locate emails, contact forms, and social profiles (LinkedIn, Instagram, Facebook, Twitter, YouTube).
+- **Multi-Provider AI (BYOK)**:
+  - **Ollama**: Local AI (gemma3:4b, llama3) with zero cloud dependencies (desktop).
+  - **Google Gemini**: Gemini 2.0 Flash / 1.5 Flash using GEMINI_API_KEY.
+  - **OpenAI**: GPT-4o Mini / GPT-4o using OPENAI_API_KEY.
+  - **Anthropic Claude**: Claude 3.5 Sonnet / Haiku using CLAUDE_API_KEY.
+- **Live Stream**: Real-time progress updates, stats, log streaming, and quota telemetry via Server-Sent Events (SSE).
+- **Data Export**: Immediate export to CSV and JSON formats.
+
+## Key API Endpoints
+
+- `POST /api/search`: Start a new scraping job with query, location, radius, maxLeads, aiProvider, aiModel.
+- `GET /api/search/:jobId/stream`: SSE stream for real-time progress, discovered leads, stats, and quota info.
+- `POST /api/search/:jobId/cancel`: Abort an in-progress search job.
+- `GET /api/search/:jobId/results`: Retrieve finalized lead records.
+- `GET /api/ai/providers`: List available AI providers and their configuration status.
+- `GET /api/ai/models`: List available models for the selected provider.
+- `GET /api/ai/quota`: Retrieve rate limit and quota metrics for configured cloud providers.
+- `GET /api/ai/health`: Health-check the active AI provider.
+- `POST /api/ai/select`: Select active AI provider and model at runtime.
+- `GET /api/export/csv/:jobId`: Download CSV report of scraped leads.
+- `GET /api/export/json/:jobId`: Download JSON report of scraped leads.
+
+## Security Architecture
+
+- **Server-Side API Key Storage**: Cloud API keys are configured strictly in `.env` on the server and are never exposed to the client or committed to version control.
+- **Prompt Injection Defense**: Input sanitization strips adversarial override phrases and restricts character lengths.
+- **Security Headers**: Standard CSP, X-Frame-Options (DENY), nosniff, and strict referrer policy.
+- **Graceful Fallback**: Cloud AI errors automatically fall back to local Ollama or raw string parsing.
+
+## Usage & Development
+
+- Start development servers: `npm run dev` (API at port 5000, UI at port 5173).
+- Build for production: `npm run build` then `npm start`.

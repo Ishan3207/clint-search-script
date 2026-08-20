@@ -5,17 +5,33 @@ const router = express.Router();
 
 // POST /api/search - Start a new search
 router.post('/', (req, res) => {
-    const { query, location, radius, maxLeads, enableAi } = req.body;
-    
+    const { query, location, radius, maxLeads, enableAi, aiProvider, aiModel, aiBaseUrl } = req.body;
+
+    if (!query && !location) {
+        return res.status(400).json({ error: 'At least a search query or location is required.' });
+    }
+
     // Combine into a natural language string for the parser
-    // E.g. "cafes with no websites in Bangalore within 10km max 50"
     let fullQuery = query || '';
     if (location) fullQuery += ` in ${location}`;
     if (radius) fullQuery += ` within ${radius}`;
     if (maxLeads && maxLeads !== 'All') fullQuery += ` max ${maxLeads}`;
 
-    const manager = new SearchManager(fullQuery, { enableAi, query, location, radius, maxLeads });
-    
+    const providerConfig = {
+        provider: aiProvider || process.env.AI_PROVIDER || 'ollama',
+        model: aiModel || null,
+        baseUrl: aiBaseUrl || process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
+    };
+
+    const manager = new SearchManager(fullQuery, {
+        enableAi: enableAi !== false,
+        query,
+        location,
+        radius,
+        maxLeads,
+        providerConfig
+    });
+
     // Start processing asynchronously
     manager.start();
 
@@ -36,10 +52,9 @@ router.get('/:id/stream', (req, res) => {
     res.setHeader('Connection', 'keep-alive');
 
     // Add this response object to the manager's client list
-    // We pass req to handle disconnects
-    req.managerRes = res; 
+    req.managerRes = res;
     manager.clients.add(res);
-    
+
     res.write(`event: connection\ndata: {"message": "Connected", "id": "${jobId}"}\n\n`);
 
     req.on('close', () => {

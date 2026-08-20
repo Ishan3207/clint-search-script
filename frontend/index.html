@@ -3,69 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lead Finder Pro - AI Google Maps Scraper</title>
+    <meta name="theme-color" content="#0d1117">
+    <meta name="description" content="Google Maps Lead Scraper with AI-powered search, conversational prompt interface, and BYOK cloud AI.">
+    <title>LeadFinder AI | Apollo-Style Google Maps Lead Scraper</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="/src/styles/variables.css">
     <link rel="stylesheet" href="/src/styles/base.css">
     <link rel="stylesheet" href="/src/styles/layout.css">
     <link rel="stylesheet" href="/src/styles/components.css">
+    <link rel="stylesheet" href="/src/styles/skeleton.css">
     <link rel="stylesheet" href="/src/styles/animations.css">
 </head>
 <body class="dark-theme">
-    <div class="app-container">
-        <!-- Header -->
+    <div class="app-shell">
+        <!-- Top App Navigation Header -->
         <header class="app-header glass-panel">
-            <div class="header-content">
-                <div class="logo-area">
-                    <h1>LEAD FINDER <span class="accent-text">PRO</span></h1>
-                    <p>AI-Powered Google Maps Scraper</p>
+            <div class="header-left">
+                <a href="/" class="brand-logo">
+                    <span class="brand-icon">🗺️</span>
+                    <span class="brand-name">LeadFinder AI</span>
+                </a>
+                <nav class="nav-links desktop-only">
+                    <a href="/" class="nav-link active">🔍 Finder</a>
+                    <a href="/settings.html" class="nav-link">⚙️ API Setup</a>
+                </nav>
+            </div>
+            
+            <div class="header-right">
+                <!-- Quota / Provider Chip in Header -->
+                <div class="header-status-group">
+                    <div class="ai-status" id="aiStatusBadge">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Checking AI...</span>
+                    </div>
                 </div>
-                <div class="ai-status" id="aiStatusBadge">
+
+                <!-- Settings Direct Link -->
+                <a href="/settings.html" class="btn btn-secondary btn-sm desktop-only" title="Configure API Keys & Models">
+                    ⚙️ API Setup
+                </a>
+
+                <!-- Mobile Menu Button -->
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Mobile Navigation Drawer -->
+        <div class="mobile-nav-backdrop" id="mobileNavBackdrop"></div>
+        <div class="mobile-nav-drawer" id="mobileNavDrawer">
+            <div class="drawer-header">
+                <div style="font-weight: 700; font-size: 1.1rem;">Navigation</div>
+                <button class="btn btn-icon btn-sm" id="closeMobileMenuBtn" style="border: none; font-size: 1.25rem;">&times;</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <a href="/" class="nav-drawer-item active">🔍 Lead Finder</a>
+                <a href="/settings.html" class="nav-drawer-item">⚙️ AI & API Setup</a>
+                <a href="/llms.txt" target="_blank" class="nav-drawer-item">📄 llms.txt Reference</a>
+                <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 0.5rem 0;">
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Active AI State:</div>
+                <div class="ai-status" id="mobileAiStatusBadge" style="justify-content: center;">
                     <span class="status-dot"></span>
                     <span class="status-text">Checking AI...</span>
                 </div>
             </div>
-        </header>
+        </div>
 
-        <!-- Main Content -->
-        <main class="app-main">
-            <!-- Search Configuration Card -->
-            <section class="card search-card glass-panel" id="searchFormContainer">
+        <!-- Main Resizable Horizontal Dashboard Layout (Apollo.io + Gemini style) -->
+        <main class="dashboard-horizontal-layout">
+            <!-- Left Pane: Conversational AI Chat Bar & Scope Controls -->
+            <section class="left-chat-pane glass-panel" id="leftChatPane">
                 <!-- Injected via search-form.js -->
+                <div id="searchFormContainer"></div>
+
+                <!-- Progress & Stats Strip (Auto-visible during active search) -->
+                <div class="card status-card glass-panel hidden" id="progressContainer" style="margin-top: 0.75rem;"></div>
             </section>
 
-            <!-- Progress & Status -->
-            <section class="card status-card glass-panel hidden" id="progressContainer">
-                <!-- Injected via progress-bar.js -->
-            </section>
+            <!-- Vertical Resizer Splitter between Left Chat and Right Leads Table -->
+            <div class="horizontal-splitter" id="horizontalSplitter" title="Drag left/right to scale pane widths">
+                <div class="splitter-knob-v"></div>
+            </div>
 
-            <!-- Console Log -->
-            <section class="card console-card glass-panel">
-                <div class="card-header">
-                    <h2>Live Console</h2>
-                    <button class="btn btn-icon btn-sm" id="clearConsoleBtn">Clear</button>
-                </div>
-                <div class="console-body" id="consoleLogContainer">
-                    <!-- Injected via console-log.js -->
-                </div>
-            </section>
-
-            <!-- Results Data -->
-            <section class="card results-card glass-panel">
-                <div class="card-header">
-                    <h2>Qualified Leads <span class="badge" id="leadCountBadge">0</span></h2>
+            <!-- Right Pane: Apollo.io-style Qualified Leads Box -->
+            <section class="right-results-pane glass-panel" id="rightResultsPane">
+                <div class="results-header">
+                    <div class="results-title-group">
+                        <h2>Qualified Leads <span class="badge primary" id="leadCountBadge">0</span></h2>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Verified Google Maps business contacts</span>
+                    </div>
                     <div id="exportControlsContainer">
                         <!-- Injected via export-controls.js -->
                     </div>
                 </div>
+
                 <div class="table-container" id="resultsTableContainer">
                     <!-- Injected via results-table.js -->
                 </div>
             </section>
         </main>
+
+        <!-- Live Console Bottom Sliding Drawer (Auto-expands on active scraping) -->
+        <div class="console-drawer collapsed" id="consoleDrawer">
+            <!-- Drag Handle to scale console height -->
+            <div class="console-resize-handle" id="consoleResizeHandle" title="Drag up/down to resize console height">
+                <div class="handle-bar"></div>
+            </div>
+
+            <div class="console-drawer-header">
+                <div class="console-header-left">
+                    <button class="btn-console-pill" id="consoleToggleBtn">
+                        <span class="live-pulse-dot"></span>
+                        <strong>Live Scraper Console</strong>
+                        <span class="console-job-status" id="consoleJobStatus">Idle</span>
+                    </button>
+                </div>
+                <div class="console-header-right">
+                    <button class="btn btn-secondary btn-sm" id="clearConsoleBtn">Clear</button>
+                    <button class="btn btn-secondary btn-sm" id="minimizeConsoleBtn" title="Collapse Console">_</button>
+                </div>
+            </div>
+
+            <div class="console-body" id="consoleLogContainer">
+                <!-- Injected via console-log.js -->
+            </div>
+        </div>
     </div>
     
     <script type="module" src="/src/main.js"></script>

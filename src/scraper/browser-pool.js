@@ -23,7 +23,10 @@ class BrowserPool {
         '--disable-accelerated-2d-canvas',
         '--no-first-run',
         '--no-zygote',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-extensions',
+        '--disable-background-networking',
+        '--disable-default-apps'
       ]
     });
 
@@ -36,8 +39,19 @@ class BrowserPool {
         },
         locale: 'en-US',
         userAgent: this._getRandomUserAgent(),
-        // Block images/fonts/css to speed up scraping
         ignoreHTTPSErrors: true
+      });
+      
+      // Actually block images, fonts, media, and stylesheets to save RAM and bandwidth
+      await context.route('**/*', (route) => {
+          const request = route.request();
+          const resourceType = request.resourceType();
+          
+          if (['image', 'media', 'font', 'stylesheet'].includes(resourceType)) {
+              route.abort();
+          } else {
+              route.continue();
+          }
       });
 
       // Apply stealth scripts to the context

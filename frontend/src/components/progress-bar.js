@@ -8,7 +8,11 @@ export function renderProgressBar(container) {
         </div>
         <div class="progress-text">
             <span id="progressPhase">Waiting to start...</span>
-            <span id="progressPercent">0%</span>
+            <div>
+                <span id="progressLeads" style="margin-right: 1rem;"></span>
+                <span id="progressElapsed" style="margin-right: 1rem;"></span>
+                <span id="progressPercent">0%</span>
+            </div>
         </div>
     `;
 }
@@ -51,4 +55,10 @@ export function resetProgress() {
     
     const percentText = document.getElementById('progressPercent');
     if (percentText) percentText.innerText = '0%';
+    
+    const leadsText = document.getElementById('progressLeads');
+    if (leadsText) leadsText.innerText = '';
+    
+    const elapsedText = document.getElementById('progressElapsed');
+    if (elapsedText) elapsedText.innerText = '';
 }
